@@ -32,13 +32,19 @@ public class App {
         }
 
         Producer<String, String> producer = new KafkaProducer<>(props);
-        long record_count = 0;
         long end_time = System.currentTimeMillis() + runtime_ms;
+        long known_offset = -1;
 
         while (System.currentTimeMillis() < end_time) {
-            producer.send(new ProducerRecord<String, String>(topic, "key-" + record_count, "value-" + record_count));
-            System.out.println("Sent record " + record_count);
-            record_count += 1;
+            try {
+                var f = producer.send(new ProducerRecord<String, String>(topic, "key-" + known_offset, "value-" + known_offset));
+                var m = f.get();
+                known_offset = Math.max(known_offset, m.offset());
+                System.out.println("Sent record " + known_offset);
+            } catch (Exception ex) {
+                System.out.println(ex);
+                ex.printStackTrace();
+            }
         }
 
         producer.close();
