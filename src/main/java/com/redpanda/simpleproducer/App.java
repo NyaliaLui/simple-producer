@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.Properties;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
+import java.util.Random;
 import java.lang.Thread;
 import java.io.BufferedWriter;
 import org.apache.kafka.clients.producer.Producer;
@@ -37,7 +38,12 @@ public class App {
 
         while (System.currentTimeMillis() < end_time) {
             try {
-                var f = producer.send(new ProducerRecord<String, String>(topic, "key-" + known_offset, "value-" + known_offset));
+                // Let a value be a random sequence of 512 bytes
+                byte[] value_bytes = new byte[512];
+                new Random().nextBytes(value_bytes);
+                String value = new String(value_bytes);
+
+                var f = producer.send(new ProducerRecord<String, String>(topic, "key-" + known_offset, value));
                 var m = f.get();
                 known_offset = Math.max(known_offset, m.offset());
                 System.out.println("Sent record " + known_offset);
